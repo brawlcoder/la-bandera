@@ -1,0 +1,24 @@
+{
+  "id": "betis",
+  "name": "Real Betis",
+  "siteName": "La Bandera de San Fernando",
+  "siteNameShort": "La Bandera",
+  "shareEmoji": "🏴",
+  "themeColor": "#0bb363",
+  "themeColorDark": "#08864b",
+  "themeColorSoft": "#e7f5ed",
+  "winLabel": { "es": "¡Plantada!", "en": "Flag planted!" },
+  "winSubtitle": { "es": "Has plantado la bandera", "en": "You found today's player" },
+  "subtitle": {
+    "es": "Adivina al jugador del Real Betis del día",
+    "en": "Guess today's Real Betis player"
+  },
+  "rulesSubtitle": {
+    "es": "Plaza Nueva, Sevilla. Cuando el Betis conquista títulos, los béticos lo celebramos junto a San Fernando. Adivina al jugador del Real Betis del día y entrégale simbólicamente una bandera verdiblanca. Un reto nuevo cada día.",
+    "en": "Plaza Nueva, Seville. When Betis win a trophy, fans celebrate alongside San Fernando. Guess today's Real Betis player and symbolically hand him a green-and-white flag. A new challenge every day."
+  },
+  "footer": {
+    "es": "Proyecto no oficial. Sin afiliación con el Real Betis Balompié.",
+    "en": "Unofficial project. Not affiliated with Real Betis Balompié."
+  }
+}
