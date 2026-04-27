@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Globe2, X, RotateCcw, Share2, Check, HelpCircle, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
+import { track } from "@vercel/analytics";
 
 import club from "../data/club.json";
 import playersData from "../data/players.json";
@@ -202,8 +203,8 @@ function GuessInput({ value, setValue, suggestions, onPick, disabled, t }) {
           {filtered.length === 0 ? (
             <div className="px-3 py-3 text-sm" style={{ color: C.textMute, fontFamily: "'Geist', sans-serif" }}>{t.noResults}</div>
           ) : (
-filtered.map(p => (
-              <button key={p.name} onMouseDown={(e) => { e.preventDefault(); onPick(p); setValue(""); }}
+            filtered.map(p => (
+              <button key={p.name} onClick={() => { onPick(p); setValue(""); }}
                 className="w-full text-left px-3 py-2 transition-colors hover:bg-[#f3f3f0] flex items-center gap-2"
                 style={{ fontFamily: "'Geist', sans-serif" }}>
                 <span className="text-base">{FLAG[p.country] || "🏳️"}</span>
@@ -234,7 +235,7 @@ function GridHeader({ t }) {
   return (
     <div className="grid items-center gap-px mb-1.5 text-[9px] tracking-[0.15em] uppercase"
       style={{
-        gridTemplateColumns: "minmax(78px, 1.5fr) repeat(6, minmax(0, 1fr))",
+        gridTemplateColumns: "minmax(110px, 1.4fr) 50px 60px 60px 60px 60px 60px",
         color: C.textMute, fontFamily: "'Geist Mono', monospace",
       }}>
       {cols.map((c, i) => (
@@ -251,10 +252,10 @@ function GuessRow({ guess, target, t }) {
     <div className="mb-1">
       <div className="grid items-stretch gap-px"
         style={{
-          gridTemplateColumns: "minmax(78px, 1.5fr) repeat(6, minmax(0, 1fr))",
+          gridTemplateColumns: "minmax(110px, 1.4fr) 50px 60px 60px 60px 60px 60px",
           backgroundColor: C.surface, border: `1px solid ${C.border}`,
         }}>
-        <div className="flex items-center px-2 py-2 gap-1 overflow-hidden" style={{ minHeight: 44 }}>
+        <div className="flex items-center px-2.5 py-2 gap-1.5" style={{ minHeight: 44 }}>
           <span className="text-base shrink-0">{FLAG[guess.country] || "🏳️"}</span>
           <span className="text-sm truncate"
             style={{ color: C.text, fontFamily: "'Geist', sans-serif", fontWeight: 500 }}>
@@ -443,6 +444,7 @@ export default function Game() {
     setGuesses([]);
     setStatus("playing");
     setRerolls(0);
+    track("game_started", { difficulty });
   }, [difficulty]);
 
   const onPick = (player) => {
@@ -450,8 +452,13 @@ export default function Game() {
     if (guesses.find(g => g.name === player.name)) return;
     const next = [...guesses, player];
     setGuesses(next);
-    if (player.name === target.name) setStatus("won");
-    else if (next.length >= MAX_GUESSES) setStatus("lost");
+    if (player.name === target.name) {
+      setStatus("won");
+      track("game_won", { difficulty, guesses: next.length });
+    } else if (next.length >= MAX_GUESSES) {
+      setStatus("lost");
+      track("game_lost", { difficulty });
+    }
   };
 
   const onShare = async () => {
@@ -460,6 +467,7 @@ export default function Game() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      track("share_clicked", { difficulty, outcome: status });
     } catch {}
   };
 
@@ -476,7 +484,7 @@ export default function Game() {
   return (
     <>
       <FontInjector />
-      <div className="min-h-screen p-3 sm:p-7 overflow-x-hidden"
+      <div className="min-h-screen p-5 sm:p-7"
         style={{
           backgroundColor: C.bg, color: C.text,
           backgroundImage: `radial-gradient(ellipse 80% 50% at 50% -10%, ${club.themeColor}0a, transparent 60%)`,
