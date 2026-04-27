@@ -425,8 +425,21 @@ function RulesModal({ open, onClose, lang, t }) {
 // =====================================================================
 // Main game
 // =====================================================================
+// Pick the initial language: previously chosen (localStorage) > browser preference > Spanish default
+function getInitialLang() {
+  try {
+    const saved = localStorage.getItem("bandera_lang");
+    if (saved === "es" || saved === "en") return saved;
+  } catch {}
+  try {
+    const browserLang = (navigator.language || "es").toLowerCase();
+    if (browserLang.startsWith("en")) return "en";
+  } catch {}
+  return "es";
+}
+
 export default function Game() {
-  const [lang, setLang] = useState("es");
+  const [lang, setLangRaw] = useState(getInitialLang);
   const [difficulty, setDifficulty] = useState("medium");
   const [target, setTarget] = useState(() => pickTarget(PLAYERS, "medium"));
   const [guesses, setGuesses] = useState([]);
@@ -435,6 +448,12 @@ export default function Game() {
   const [copied, setCopied] = useState(false);
   const [showRules, setShowRules] = useState(true);
   const [rerolls, setRerolls] = useState(0);
+
+  // Wrapper around setLang that also persists the choice
+  const setLang = (newLang) => {
+    setLangRaw(newLang);
+    try { localStorage.setItem("bandera_lang", newLang); } catch {}
+  };
 
   const t = T[lang];
   const clue = useMemo(() => pickClue(target, PLAYERS, difficulty, lang, T), [target, difficulty, lang]);
