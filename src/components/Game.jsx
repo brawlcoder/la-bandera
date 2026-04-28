@@ -174,37 +174,64 @@ function GuessCounter({ used, max, status }) {
 
 function GuessInput({ value, setValue, suggestions, onPick, disabled, t }) {
   const inputRef = useRef(null);
-  const [focused, setFocused] = useState(false);
+  const wrapperRef = useRef(null);
+  const [open, setOpen] = useState(false);
+
   const filtered = useMemo(() => {
     if (!value.trim()) return [];
     const q = value.toLowerCase().trim();
     return suggestions.filter(p => p.name.toLowerCase().includes(q)).slice(0, 6);
   }, [value, suggestions]);
 
+  // Close dropdown when clicking outside.
+  // We listen for `mouseup` (not `mousedown`) deliberately: the dropdown's
+  // own option buttons fire on `mousedown` and call setOpen(false) themselves
+  // via choose(). If we listened for mousedown here, this handler could fire
+  // first and close the dropdown before the button's handler runs.
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mouseup", onDocClick);
+    return () => document.removeEventListener("mouseup", onDocClick);
+  }, [open]);
+
+  const choose = (player) => {
+    onPick(player);
+    setValue("");
+    setOpen(false);
+  };
+
+  const showDropdown = open && value.trim();
+
   return (
-    <div className="relative mb-4">
+    <div className="relative mb-4" ref={wrapperRef}>
       <input ref={inputRef} type="text" value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setTimeout(() => setFocused(false), 150)}
+        onChange={(e) => { setValue(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
         placeholder={t.typeName} disabled={disabled}
         className="w-full px-3 py-3 outline-none transition-colors"
         style={{
           backgroundColor: disabled ? C.graySoft : C.surface,
-          border: `1px solid ${focused ? C.accent : C.border}`,
+          border: `1px solid ${open ? C.accent : C.border}`,
           color: C.text, fontFamily: "'Geist', sans-serif", fontSize: "14px",
         }}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && filtered.length > 0) { onPick(filtered[0]); setValue(""); }
+          if (e.key === "Enter" && filtered.length > 0) { choose(filtered[0]); }
+          else if (e.key === "Escape") { setOpen(false); }
         }} />
-      {focused && value.trim() && (
+      {showDropdown && (
         <div className="absolute top-full left-0 right-0 mt-1 z-20 max-h-72 overflow-y-auto"
           style={{ backgroundColor: C.surface, border: `1px solid ${C.border}`, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
           {filtered.length === 0 ? (
             <div className="px-3 py-3 text-sm" style={{ color: C.textMute, fontFamily: "'Geist', sans-serif" }}>{t.noResults}</div>
           ) : (
             filtered.map(p => (
-              <button key={p.name} onClick={() => { onPick(p); setValue(""); }}
+              <button key={p.name} type="button"
+                onMouseDown={(e) => { e.preventDefault(); choose(p); }}
                 className="w-full text-left px-3 py-2 transition-colors hover:bg-[#f3f3f0] flex items-center gap-2"
                 style={{ fontFamily: "'Geist', sans-serif" }}>
                 <span className="text-base">{FLAG[p.country] || "🏳️"}</span>
