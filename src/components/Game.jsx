@@ -172,7 +172,7 @@ function GuessCounter({ used, max, status }) {
   );
 }
 
-function GuessInput({ value, setValue, suggestions, onPick, disabled, t }) {
+function GuessInput({ value, setValue, suggestions, onPick, guessedNames = [], disabled, t }) {
   const inputRef = useRef(null);
   const wrapperRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -180,8 +180,12 @@ function GuessInput({ value, setValue, suggestions, onPick, disabled, t }) {
   const filtered = useMemo(() => {
     if (!value.trim()) return [];
     const q = value.toLowerCase().trim();
-    return suggestions.filter(p => p.name.toLowerCase().includes(q)).slice(0, 6);
-  }, [value, suggestions]);
+    const guessedSet = new Set(guessedNames);
+    return suggestions
+      .filter(p => !guessedSet.has(p.name))
+      .filter(p => p.name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [value, suggestions, guessedNames]);
 
   // Close dropdown when clicking outside.
   // We listen for `mouseup` (not `mousedown`) deliberately: the dropdown's
@@ -543,6 +547,7 @@ export default function Game() {
           <GuessCounter used={guesses.length} max={MAX_GUESSES} status={status} />
           <GuessInput value={input} setValue={setInput}
             suggestions={suggestionPool} onPick={onPick}
+            guessedNames={guesses.map(g => g.name)}
             disabled={status !== "playing"} t={t} />
 
           {guesses.length > 0 && (
